@@ -8,21 +8,15 @@ using namespace std;
 class BPlusTree
 {
 public:
-    void insert(int, string);
-    void remove(int);
-    bool search(int);
-    void change(int, int);
-    void read(const string &);
-    void save(const string &);
-    void show();
     BPlusTree(int m) : root(nullptr), _m(m){};
+    void insert(string, string);
+    string search(string);
 
 private:
     const size_t _m;
     Node *root;
-    void splitChild(Node *, int, Node *);
-    void insertNonFull(Node *, int);
-    void remove(Node *, int);
-    string *search(Node *, int);
-    void show(Node *);
+    Node *head; // 第一个叶子节点指针
+    void insert(Node *, string, string);
+    void split(Node *);
+    string search(Node *, string);
 };

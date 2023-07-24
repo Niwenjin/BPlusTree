@@ -7,10 +7,12 @@ using namespace std;
 class Node
 {
 public:
-    Node(bool isleaf) : isleaf(isleaf), next(nullptr){};
+    Node(bool isleaf) : isleaf(isleaf), n(0), parent(nullptr), next(nullptr){};
     bool isleaf;
-    vector<int> keys;
+    size_t n;
+    vector<string> keys;
     vector<string> values;
     vector<Node *> child;
+    Node *parent;
     Node *next;
 };
