@@ -7,6 +7,8 @@ using namespace std;
 // 在B+树中插入键值对
 void BPlusTree::insert(string key, string value)
 {
+    if (search(key) != nullptr)
+        cout << "Key: " << key << "exists" << endl;
     // 根节点为空
     if (root == nullptr)
     {
@@ -142,9 +144,9 @@ bool BPlusTree::remove(string key)
     if (p == nullptr)
         return false; // 目标关键字不存在
     size_t i = 0;
-    while (i < p->n && key > p->keys[i])
+    while (key > p->keys[i])
         i++;
-    if (i == p->n)
+    if (p->keys[i] != key)
         return false; // 目标关键字不存在
     // 删除的是节点中最大值
     if (i == p->n - 1)
@@ -374,7 +376,7 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
 }
 
 // 从分支节点向上更新关键字
-void update(Node *p, string key, string newkey)
+void BPlusTree::update(Node *p, string key, string newkey)
 {
     while (p)
     {
@@ -392,6 +394,8 @@ void update(Node *p, string key, string newkey)
 Node *BPlusTree::search(Node *root, string key)
 {
     Node *p = root;
+    if (!p)
+        return nullptr;
     while (!p->isleaf)
     {
         size_t i = 0;
@@ -423,7 +427,7 @@ string *BPlusTree::search(string key)
 bool BPlusTree::change(string key, string value)
 {
     Node *p = search(root, key);
-    if (p = nullptr)
+    if (p == nullptr)
         return false;
     size_t i = 0;
     while (i < p->n && key > p->keys[i])

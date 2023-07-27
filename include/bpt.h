@@ -19,7 +19,7 @@ public:
 class BPlusTree
 {
 public:
-    BPlusTree(int m) : root(nullptr), _m(m){};
+    BPlusTree(int m) : root(nullptr), head(nullptr), _m(m){};
     void insert(string, string);
     bool remove(string);
     string *search(string);
@@ -34,8 +34,7 @@ private:
     Node *head; // 第一个叶子节点指针
     void insert(Node *, string, string);
     void split(Node *);
-    bool remove(string);
-    bool update(Node *, string, string);
+    void update(Node *, string, string);
     void borrow(Node *, Node *, bool, bool);
     void merge(Node *, Node *, bool, bool);
     Node *search(Node *, string);
