@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     }
     int m = stoi(argv[1]);
     BPlusTree bpt(m);
+    // bpt.read("savedata.txt");
     char opt;
     cout << "Input a choice: " << endl;
     while (cin >> opt)

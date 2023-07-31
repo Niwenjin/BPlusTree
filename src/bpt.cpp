@@ -8,7 +8,10 @@ using namespace std;
 void BPlusTree::insert(string key, string value)
 {
     if (search(key) != nullptr)
+    {
         cout << "Key: " << key << "exists" << endl;
+        return;
+    }
     // 根节点为空
     if (root == nullptr)
     {
@@ -144,16 +147,16 @@ bool BPlusTree::remove(string key)
     if (p == nullptr)
         return false; // 目标关键字不存在
     size_t i = 0;
-    while (key > p->keys[i])
+    while (i < p->n && key > p->keys[i])
         i++;
-    if (p->keys[i] != key)
+    if (i == p->n || p->keys[i] != key)
         return false; // 目标关键字不存在
     // 删除的是节点中最大值
     if (i == p->n - 1)
-        update(p->parent, key, p->keys[i - 2]);
+        update(p->parent, key, p->keys[i - 1]);
     // 删除键值对
     p->keys.erase(p->keys.begin() + i);
-    p->keys.erase(p->values.begin() + i);
+    p->values.erase(p->values.begin() + i);
     p->n--;
     size_t t = (_m + 1) / 2;
     // 节点中关键字数量不足
@@ -163,7 +166,7 @@ bool BPlusTree::remove(string key)
         {
             // 寻找兄弟
             i = 0;
-            while (p->parent->keys[i] < key)
+            while (p->parent->keys[i] < p->keys[p->n - 1])
                 i++;
             Node *bro;
             if (i == 0)
@@ -185,15 +188,17 @@ bool BPlusTree::remove(string key)
                     merge(p, bro, true, true);
             }
         }
-        else if (p->n = 0)
+        else if (p->n == 0)
         {
             free(p);
             root = nullptr;
+            head = nullptr;
         }
     }
     return true;
 }
 
+// 向兄弟节点借键值对
 void BPlusTree::borrow(Node *p, Node *bro, bool leaf, bool flag)
 {
     // 为叶子节点
@@ -244,6 +249,8 @@ void BPlusTree::borrow(Node *p, Node *bro, bool leaf, bool flag)
 void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
 {
     Node *parent = p->parent;
+    if (parent == nullptr)
+        return;
     // 合并叶子节点
     if (leaf)
     {
@@ -370,7 +377,8 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
         else if (parent->n == 1)
         {
             root = parent->child[0];
-            free(p);
+            root->parent = nullptr;
+            free(parent);
         }
     }
 }
@@ -383,7 +391,7 @@ void BPlusTree::update(Node *p, string key, string newkey)
         size_t i = 0;
         while (i < p->n && key > p->keys[i])
             i++;
-        if (p->keys[i] != key)
+        if (i == p->n || p->keys[i] != key)
             return;
         p->keys[i] = newkey;
         p = p->parent;
@@ -403,7 +411,8 @@ Node *BPlusTree::search(Node *root, string key)
             i++;
         if (i == p->n)
             return nullptr; // 关键字超出节点范围
-        p = p->child[i];
+        else
+            p = p->child[i];
     }
     return p;
 }
@@ -443,10 +452,15 @@ bool BPlusTree::change(string key, string value)
 void BPlusTree::show()
 {
     Node *p = head;
+    if (p)
+        cout << "--------" << endl;
+    else
+        cout << "No data" << endl;
     while (p)
     {
         for (int i = 0; i < p->n; i++)
             cout << p->keys[i] << " = " << p->values[i] << endl;
+        cout << "--------" << endl;
         p = p->next;
     }
 }
