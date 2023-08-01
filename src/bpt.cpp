@@ -26,9 +26,10 @@ void BPlusTree::insert(string key, string value)
     else
     {
         Node *p = root;
-        size_t i = 0;
-        while (i < p->n && key > p->keys[i])
-            i++;
+        // size_t i = 0;
+        // while (i < p->n && key > p->keys[i])
+        //     i++;
+        size_t i = findkey(p, key);
         // 插入的关键字大于最大值
         if (p->n == i)
         {
@@ -45,9 +46,7 @@ void BPlusTree::insert(string key, string value)
             while (!p->isleaf)
             {
                 p = p->child[i];
-                i = 0;
-                while (i < p->n && key > p->keys[i])
-                    i++;
+                i = findkey(p, key);
             }
             insert(p, key, value);
         }
@@ -57,9 +56,7 @@ void BPlusTree::insert(string key, string value)
 // 在叶子节点中插入键值对
 void BPlusTree::insert(Node *p, string key, string value)
 {
-    size_t i = 0;
-    while (i < p->n && key > p->keys[i])
-        i++;
+    size_t i = findkey(p, key);
     p->keys.insert(p->keys.begin() + i, key);
     p->values.insert(p->values.begin() + i, value);
     p->n++;
@@ -92,9 +89,10 @@ void BPlusTree::split(Node *p)
     {
         // 将中间元素提到父节点
         bro->parent = p->parent;
-        size_t i = 0;
-        while (p->keys[t] > p->parent->keys[i])
-            i++;
+        // size_t i = 0;
+        // while (p->keys[t] > p->parent->keys[i])
+        //     i++;
+        size_t i = findkey(p->parent, p->keys[t]);
         p->parent->keys.insert(p->parent->keys.begin() + i, p->keys[t]);
         p->parent->child.insert(p->parent->child.begin() + i, p);
         p->parent->child[i + 1] = bro;
@@ -146,9 +144,7 @@ bool BPlusTree::remove(string key)
     Node *p = search(root, key);
     if (p == nullptr)
         return false; // 目标关键字不存在
-    size_t i = 0;
-    while (i < p->n && key > p->keys[i])
-        i++;
+    size_t i = findkey(p, key);
     if (i == p->n || p->keys[i] != key)
         return false; // 目标关键字不存在
     // 删除的是节点中最大值
@@ -165,9 +161,10 @@ bool BPlusTree::remove(string key)
         if (p != root)
         {
             // 寻找兄弟
-            i = 0;
-            while (p->parent->keys[i] < p->keys[p->n - 1])
-                i++;
+            // i = 0;
+            // while (p->parent->keys[i] < p->keys[p->n - 1])
+            //     i++;
+            i = findkey(p->parent, p->keys[p->n - 1]);
             Node *bro;
             if (i == 0)
             {
@@ -343,9 +340,10 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
         if (parent != root)
         {
             string key = parent->keys[parent->n - 1];
-            size_t i = 0;
-            while (parent->parent->keys[i] != key)
-                i++;
+            // size_t i = 0;
+            // while (parent->parent->keys[i] != key)
+            //     i++;
+            size_t i = findkey(parent->parent, key);
             // 有左右兄弟
             if (i != 0 && i != parent->parent->n - 1)
             {
@@ -388,9 +386,7 @@ void BPlusTree::update(Node *p, string key, string newkey)
 {
     while (p)
     {
-        size_t i = 0;
-        while (i < p->n && key > p->keys[i])
-            i++;
+        size_t i = findkey(p, key);
         if (i == p->n || p->keys[i] != key)
             return;
         p->keys[i] = newkey;
@@ -406,9 +402,7 @@ Node *BPlusTree::search(Node *root, string key)
         return nullptr;
     while (!p->isleaf)
     {
-        size_t i = 0;
-        while (i < p->n && key > p->keys[i])
-            i++;
+        size_t i = findkey(p, key);
         if (i == p->n)
             return nullptr; // 关键字超出节点范围
         else
@@ -423,9 +417,7 @@ string *BPlusTree::search(string key)
     Node *p = search(root, key);
     if (p == nullptr)
         return nullptr;
-    size_t i = 0;
-    while (i < p->n && key > p->keys[i])
-        i++;
+    size_t i = findkey(p, key);
     if (p->keys[i] != key)
         return nullptr; // 未找到键值对
     else
@@ -438,9 +430,7 @@ bool BPlusTree::change(string key, string value)
     Node *p = search(root, key);
     if (p == nullptr)
         return false;
-    size_t i = 0;
-    while (i < p->n && key > p->keys[i])
-        i++;
+    size_t i = findkey(p, key);
     if (p->keys[i] != key)
         return false; // 未找到键值对
     else
@@ -475,6 +465,7 @@ void BPlusTree::read(const string &filename)
         return;
     }
     string line;
+    int cnt = 0;
     while (getline(FILE, line))
     {
         size_t pos = line.find('=');
@@ -483,7 +474,10 @@ void BPlusTree::read(const string &filename)
             string key = line.substr(0, pos - 1);
             string value = line.substr(pos + 2);
             insert(key, value);
+            cnt++;
         }
+        if (cnt % 100000 == 0)
+            cout << cnt << "data inserted" << endl;
     }
     FILE.close();
 }
@@ -500,4 +494,22 @@ void BPlusTree::save(const string &filename)
         p = p->next;
     }
     FILE.close();
+}
+
+// 折半查找节点内key值
+size_t BPlusTree::findkey(Node *p, string key)
+{
+    int low = 0, high = p->n - 1;
+    int m;
+    while (low <= high)
+    {
+        m = (low + high) / 2;
+        if (p->keys[m] == key)
+            return m;
+        if (p->keys[m] > key)
+            high = m - 1;
+        else
+            low = m + 1;
+    }
+    return low;
 }
