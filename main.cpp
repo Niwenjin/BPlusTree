@@ -82,7 +82,9 @@ void help()
 // 从文件读取键值对
 void readfile(BPlusTree &bpt)
 {
-    string filename = readline("Read from: ");
+    cout<<"Read from: "<<endl;
+    string filename;
+    cin>>filename;
     bpt.read(filename);
 }
 

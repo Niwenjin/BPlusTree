@@ -7,13 +7,13 @@ using namespace std;
 // 在B+树中插入键值对
 void BPlusTree::insert(string key, string value)
 {
-    if (search(key) != nullptr)
+    if (search(key))
     {
         cout << "Key: " << key << "exists" << endl;
         return;
     }
     // 根节点为空
-    if (root == nullptr)
+    if (!root)
     {
         root = new Node(true);
         insert(root, key, value);
@@ -26,36 +26,24 @@ void BPlusTree::insert(string key, string value)
     else
     {
         Node *p = root;
-        // size_t i = 0;
-        // while (i < p->n && key > p->keys[i])
-        //     i++;
         size_t i = findkey(p, key);
         // 插入的关键字大于最大值
         if (p->n == i)
-        {
             while (!p->isleaf)
             {
                 p->keys[p->n - 1] = key; // 沿途更新key值
                 p = p->child[p->n - 1];
             }
-            insert(p, key, value);
-        }
-        // 插入的关键字不大于最大值
-        else
-        {
-            while (!p->isleaf)
-            {
-                p = p->child[i];
-                i = findkey(p, key);
-            }
-            insert(p, key, value);
-        }
+        p = search(p, key);
+        insert(p, key, value);
     }
 }
 
 // 在叶子节点中插入键值对
 void BPlusTree::insert(Node *p, string key, string value)
 {
+    if (!p)
+        return;
     size_t i = findkey(p, key);
     p->keys.insert(p->keys.begin() + i, key);
     p->values.insert(p->values.begin() + i, value);
@@ -71,7 +59,7 @@ void BPlusTree::split(Node *p)
     size_t t = _m / 2; // 分裂位置
     Node *bro = new Node(p->isleaf);
     // 分裂root节点
-    if (p->parent == nullptr)
+    if (p == root)
     {
         // 创建新root节点
         Node *newroot = new Node(false);
@@ -89,9 +77,6 @@ void BPlusTree::split(Node *p)
     {
         // 将中间元素提到父节点
         bro->parent = p->parent;
-        // size_t i = 0;
-        // while (p->keys[t] > p->parent->keys[i])
-        //     i++;
         size_t i = findkey(p->parent, p->keys[t]);
         p->parent->keys.insert(p->parent->keys.begin() + i, p->keys[t]);
         p->parent->child.insert(p->parent->child.begin() + i, p);
@@ -104,13 +89,13 @@ void BPlusTree::split(Node *p)
     {
         bro->next = p->next;
         p->next = bro;
-        for (size_t i = 0; i < (_m + 1) / 2; i++)
+        for (size_t i = 0; i < _m - t; ++i)
         {
             bro->keys.push_back(p->keys[t + i + 1]);
             bro->values.push_back(p->values[t + i + 1]);
             bro->n++;
         }
-        for (size_t i = 0; i < (_m + 1) / 2; i++)
+        for (size_t i = 0; i < _m - t; i++)
         {
             p->keys.pop_back();
             p->values.pop_back();
@@ -120,13 +105,13 @@ void BPlusTree::split(Node *p)
     // 分裂分支节点
     else
     {
-        for (int i = 0; i < (_m + 1) / 2; i++)
+        for (int i = 0; i < _m - t; i++)
         {
             bro->keys.push_back(p->keys[t + i + 1]);
             bro->child.push_back(p->child[t + i + 1]);
             bro->n++;
         }
-        for (int i = 0; i < (_m + 1) / 2; i++)
+        for (int i = 0; i < _m - t; i++)
         {
             p->keys.pop_back();
             p->child.pop_back();
@@ -148,7 +133,7 @@ bool BPlusTree::remove(string key)
     if (i == p->n || p->keys[i] != key)
         return false; // 目标关键字不存在
     // 删除的是节点中最大值
-    if (i == p->n - 1)
+    if (i != 0 && i == p->n - 1)
         update(p->parent, key, p->keys[i - 1]);
     // 删除键值对
     p->keys.erase(p->keys.begin() + i);
@@ -187,7 +172,7 @@ bool BPlusTree::remove(string key)
         }
         else if (p->n == 0)
         {
-            free(p);
+            delete (p);
             root = nullptr;
             head = nullptr;
         }
@@ -246,91 +231,61 @@ void BPlusTree::borrow(Node *p, Node *bro, bool leaf, bool flag)
 void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
 {
     Node *parent = p->parent;
-    if (parent == nullptr)
-        return;
-    // 合并叶子节点
-    if (leaf)
+    if (flag)
     {
-        if (flag)
+        size_t k = findkey(parent, bro->keys[bro->n - 1]);
+        // 向左合并
+        if (leaf)
         {
-            string key = bro->keys[bro->n - 1];
-            // 向左合并
-            for (int i = 0; i < p->n; i++)
+            for (size_t i = 0; i < p->n; ++i)
             {
                 bro->keys.push_back(p->keys[i]);
                 bro->values.push_back(p->values[i]);
                 bro->n++;
             }
-            size_t i = 0;
-            while (parent->keys[i] != key)
-                i++;
-            parent->keys.erase(parent->keys.begin() + i);
-            parent->child.erase(parent->child.begin() + i);
-            parent->n--;
             bro->next = p->next;
-            free(p);
         }
         else
         {
-            string key = p->keys[p->n - 1];
-            // 向右合并
-            for (int i = 0; i < bro->n; i++)
-            {
-                p->keys.push_back(bro->keys[i]);
-                p->values.push_back(bro->values[i]);
-                p->n++;
-            }
-            size_t i = 0;
-            while (parent->keys[i] != key)
-                i++;
-            parent->keys.erase(parent->keys.begin() + i);
-            parent->child.erase(parent->child.begin() + i);
-            parent->n--;
-            p->next = bro->next;
-            free(bro);
-        }
-    }
-    // 合并非叶子节点
-    else
-    {
-        if (flag)
-        {
-            string key = bro->keys[bro->n - 1];
-            // 向左合并
-            for (int i = 0; i < p->n; i++)
+            for (size_t i = 0; i < p->n; ++i)
             {
                 bro->keys.push_back(p->keys[i]);
                 bro->child.push_back(p->child[i]);
                 bro->n++;
             }
-            size_t i = 0;
-            while (parent->keys[i] != key)
-                i++;
-            parent->keys.erase(parent->keys.begin() + i);
-            parent->child.erase(parent->child.begin() + i);
-            parent->n--;
-            bro->next = p->next;
-            free(p);
+        }
+        delete (p);
+        parent->keys.erase(parent->keys.begin() + k);
+        parent->child.erase(parent->child.begin() + k + 1);
+        parent->n--;
+    }
+    else
+    {
+        size_t k = findkey(parent, p->keys[p->n - 1]);
+        // 向右合并
+        if (leaf)
+        {
+            for (size_t i = 0; i < bro->n; ++i)
+            {
+                p->keys.push_back(bro->keys[i]);
+                p->values.push_back(bro->values[i]);
+                p->n++;
+            }
+            p->next = bro->next;
         }
         else
         {
-            string key = p->keys[p->n - 1];
-            // 向右合并
-            for (int i = 0; i < bro->n; i++)
+            for (size_t i = 0; i < bro->n; ++i)
             {
                 p->keys.push_back(bro->keys[i]);
                 p->child.push_back(bro->child[i]);
                 p->n++;
             }
-            size_t i = 0;
-            while (parent->keys[i] != key)
-                i++;
-            parent->keys.erase(parent->keys.begin() + i);
-            parent->child.erase(parent->child.begin() + i);
-            parent->n--;
-            p->next = bro->next;
-            free(bro);
         }
+        delete (bro);
+        parent->keys.erase(parent->keys.begin() + k);
+        parent->child.erase(parent->child.begin() + k + 1);
+        parent->n--;
     }
     size_t t = (_m + 1) / 2;
     // 父节点元素不足
@@ -340,12 +295,22 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
         if (parent != root)
         {
             string key = parent->keys[parent->n - 1];
-            // size_t i = 0;
-            // while (parent->parent->keys[i] != key)
-            //     i++;
             size_t i = findkey(parent->parent, key);
-            // 有左右兄弟
-            if (i != 0 && i != parent->parent->n - 1)
+            if (i == parent->parent->n - 1)
+            {
+                if (parent->parent->child[i - 1]->n > t)
+                    borrow(parent, parent->parent->child[i - 1], false, true);
+                else
+                    merge(parent, parent->parent->child[i - 1], false, true);
+            }
+            else if (i == 0)
+            {
+                if (parent->parent->child[i + 1]->n > t)
+                    borrow(parent, parent->parent->child[i + 1], false, false);
+                else
+                    merge(parent, parent->parent->child[i + 1], false, false);
+            }
+            else
             {
                 if (parent->parent->child[i - 1]->n > t)
                     borrow(parent, parent->parent->child[i - 1], false, true);
@@ -354,29 +319,13 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
                 else
                     merge(parent, parent->parent->child[i - 1], false, true);
             }
-            // 只有左兄弟
-            else if (i != 0)
-            {
-                if (parent->parent->child[i - 1]->n > t)
-                    borrow(parent, parent->parent->child[i - 1], false, true);
-                else
-                    merge(parent, parent->parent->child[i - 1], false, true);
-            }
-            // 只有右兄弟
-            else
-            {
-                if (parent->parent->child[i + 1]->n > t)
-                    borrow(parent, parent->parent->child[i + 1], false, false);
-                else
-                    merge(parent, parent->parent->child[i + 1], false, false);
-            }
         }
         // 根节点只有一个元素
         else if (parent->n == 1)
         {
             root = parent->child[0];
+            delete (parent);
             root->parent = nullptr;
-            free(parent);
         }
     }
 }
@@ -418,7 +367,7 @@ string *BPlusTree::search(string key)
     if (p == nullptr)
         return nullptr;
     size_t i = findkey(p, key);
-    if (p->keys[i] != key)
+    if (i == p->n || p->keys[i] != key)
         return nullptr; // 未找到键值对
     else
         return &p->values[i]; // 找到键值对
@@ -477,7 +426,7 @@ void BPlusTree::read(const string &filename)
             cnt++;
         }
         if (cnt % 100000 == 0)
-            cout << cnt << "data inserted" << endl;
+            cout << cnt << " data inserted" << endl;
     }
     FILE.close();
 }
