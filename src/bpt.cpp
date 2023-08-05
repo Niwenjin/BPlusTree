@@ -9,7 +9,7 @@ void BPlusTree::insert(string key, string value)
 {
     if (search(key))
     {
-        cout << "Key: " << key << "exists" << endl;
+        cout << "Key: " << key << " exists" << endl;
         return;
     }
     // 根节点为空
@@ -79,8 +79,7 @@ void BPlusTree::split(Node *p)
         bro->parent = p->parent;
         size_t i = findkey(p->parent, p->keys[t]);
         p->parent->keys.insert(p->parent->keys.begin() + i, p->keys[t]);
-        p->parent->child.insert(p->parent->child.begin() + i, p);
-        p->parent->child[i + 1] = bro;
+        p->parent->child.insert(p->parent->child.begin() + i + 1, bro);
         p->parent->n++;
     }
 
@@ -95,7 +94,7 @@ void BPlusTree::split(Node *p)
             bro->values.push_back(p->values[t + i + 1]);
             bro->n++;
         }
-        for (size_t i = 0; i < _m - t; i++)
+        for (size_t i = 0; i < _m - t; ++i)
         {
             p->keys.pop_back();
             p->values.pop_back();
@@ -109,6 +108,7 @@ void BPlusTree::split(Node *p)
         {
             bro->keys.push_back(p->keys[t + i + 1]);
             bro->child.push_back(p->child[t + i + 1]);
+            p->child[t + i + 1]->parent = bro;
             bro->n++;
         }
         for (int i = 0; i < _m - t; i++)
