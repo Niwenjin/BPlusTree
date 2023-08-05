@@ -387,27 +387,52 @@ bool BPlusTree::change(string key, string value)
     return true;
 }
 
-// 遍历打印所有键值对
+// 层序遍历b+树
 void BPlusTree::show()
 {
-    Node *p = head;
-    if (p)
-        cout << "--------" << endl;
+    if (!head)
+        cout << "No data!" << endl;
     else
-        cout << "No data" << endl;
-    while (p)
     {
-        for (int i = 0; i < p->n; i++)
-            cout << p->keys[i] << " = " << p->values[i] << endl;
-        cout << "--------" << endl;
-        p = p->next;
+        vector<Node *> nodes;
+        nodes.push_back(root);
+        nodes.push_back(nullptr);
+        size_t i = 0;
+        Node *p;
+        Node *parent = root;
+        while (true)
+        {
+            p = nodes[i];
+            if (!p)
+            {
+                i++;
+                continue;
+            }
+            if (p != root && p->parent == parent)
+            {
+                nodes.push_back(nullptr);
+                parent = p;
+            }
+            if (!p->isleaf)
+            {
+                for (size_t j = 0; j < p->n; ++j)
+                    nodes.push_back(p->child[j]);
+            }
+            else
+                break;
+            i++;
+        }
+        for (i = 0; i < nodes.size(); ++i)
+            print(nodes[i]);
+        cout << endl;
     }
 }
 
 // 从文件读取键值对
 void BPlusTree::read(const string &filename)
 {
-    ifstream FILE(filename);
+    string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
+    ifstream FILE(filepath + filename);
     if (!FILE)
     {
         cerr << "Fail to open " << filename << endl;
@@ -461,4 +486,20 @@ size_t BPlusTree::findkey(Node *p, string key)
             low = m + 1;
     }
     return low;
+}
+
+// 遍历打印结点key值
+void BPlusTree::print(Node *p)
+{
+    if (!p)
+    {
+        cout << endl
+             << "--------" << endl;
+        return;
+    }
+    size_t n = p->n;
+    cout << "|";
+    for (int i = 0; i < n; i++)
+        cout << p->keys[i] << " ";
+    cout << "|";
 }

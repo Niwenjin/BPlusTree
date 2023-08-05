@@ -39,4 +39,5 @@ private:
     void merge(Node *, Node *, bool, bool);
     Node *search(Node *, string);
     size_t findkey(Node *, string);
+    void print(Node *);
 };
