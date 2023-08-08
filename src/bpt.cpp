@@ -1,7 +1,9 @@
 #include "bpt.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
+#include <queue>
 using namespace std;
 
 // 在B+树中插入键值对
@@ -387,45 +389,62 @@ bool BPlusTree::change(string key, string value)
     return true;
 }
 
+// 遍历叶子节点
+void BPlusTree::printall()
+{
+    Node *p = head;
+    if (!p)
+    {
+        cout << "No data!" << endl;
+        return;
+    }
+    while (p)
+    {
+        for (size_t i = 0; i < p->n; ++i)
+            cout << p->keys[i] << " = " << p->values[i] << endl;
+        p = p->next;
+    }
+}
+
 // 层序遍历b+树
 void BPlusTree::show()
 {
-    if (!head)
-        cout << "No data!" << endl;
-    else
+    if (!root)
     {
-        vector<Node *> nodes;
-        nodes.push_back(root);
-        nodes.push_back(nullptr);
-        size_t i = 0;
-        Node *p;
-        Node *parent = root;
-        while (true)
-        {
-            p = nodes[i];
-            if (!p)
-            {
-                i++;
-                continue;
-            }
-            if (p != root && p->parent == parent)
-            {
-                nodes.push_back(nullptr);
-                parent = p;
-            }
-            if (!p->isleaf)
-            {
-                for (size_t j = 0; j < p->n; ++j)
-                    nodes.push_back(p->child[j]);
-            }
-            else
-                break;
-            i++;
-        }
-        for (i = 0; i < nodes.size(); ++i)
-            print(nodes[i]);
-        cout << endl;
+        cout << "No data!" << endl;
+        return;
     }
+    vector<Node *> nodes;
+    nodes.push_back(root);
+    nodes.push_back(nullptr);
+    size_t i = 0;
+    Node *p;
+    Node *parent = root;
+    while (true)
+    {
+        p = nodes[i];
+        if (!p)
+        {
+            i++;
+            continue;
+        }
+        if (p != root && p->parent == parent)
+        {
+            nodes.push_back(nullptr);
+            parent = p;
+        }
+        if (!p->isleaf)
+        {
+            for (size_t j = 0; j < p->n; ++j)
+                nodes.push_back(p->child[j]);
+        }
+        else
+            break;
+        i++;
+    }
+    for (i = 0; i < nodes.size(); ++i)
+        print(nodes[i]);
+    cout << endl;
 }
 
 // 从文件读取键值对
@@ -459,7 +478,8 @@ void BPlusTree::read(const string &filename)
 // 存储键值对到文件
 void BPlusTree::save(const string &filename)
 {
-    ofstream FILE(filename);
+    string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
+    ofstream FILE(filepath + filename);
     Node *p = head;
     while (p)
     {
@@ -502,4 +522,143 @@ void BPlusTree::print(Node *p)
     for (int i = 0; i < n; i++)
         cout << p->keys[i] << " ";
     cout << "|";
+}
+
+// 序列化
+void BPlusTree::serialize(const string &filename)
+{
+    if (!root)
+    {
+        cout << "No data!" << endl;
+        return;
+    }
+    vector<Node *> nodes;
+    nodes.push_back(root);
+    size_t i = 0;
+    Node *p = root;
+    Node *parent = root;
+    while (!p->isleaf)
+    {
+        if (!p->isleaf)
+        {
+            for (size_t j = 0; j < p->n; ++j)
+                nodes.push_back(p->child[j]);
+        }
+        p = nodes[++i];
+    }
+    nodes.insert(nodes.begin() + i, nullptr);
+
+    string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
+    ofstream FILE(filepath + filename);
+    bool flag = false; // 区分分支节点和叶子节点
+    for (Node *p : nodes)
+    {
+        if (p == nullptr)
+        {
+            flag = true;
+            FILE << " " << endl;
+            continue;
+        }
+        for (string s : p->keys)
+            FILE << s << " ";
+        FILE << endl;
+        if (flag)
+        {
+            for (string s : p->values)
+                FILE << s << " ";
+            FILE << endl;
+        }
+    }
+    FILE.close();
+    cout << "serialized success!" << endl;
+}
+
+// 反序列化
+void BPlusTree::deserialize(const string &filename)
+{
+    string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
+    ifstream FILE(filepath + filename);
+    if (!FILE)
+    {
+        cerr << "open " << filename << ":failed." << endl;
+        return;
+    }
+    bool flag = false; // 判断叶子节点
+    string line;
+    queue<Node *> q;
+    getline(FILE, line);
+    if (line != " ")
+    {
+        root = new Node(false);
+        q.push(root);
+        istringstream isk(line);
+        string key;
+        while (isk >> key)
+        {
+            root->keys.push_back(key);
+            root->n++;
+        }
+    }
+    // 根节点为叶子节点
+    else
+    {
+        root = new Node(true);
+        istringstream isk(line);
+        string key, value;
+        while (isk >> key)
+        {
+            root->keys.push_back(key);
+            root->n++;
+        }
+        getline(FILE, line);
+        istringstream isv(line);
+        while (isv >> value)
+            root->values.push_back(value);
+        head = root;
+    }
+
+    Node *h = new Node(true); // 记录头节点
+    h->next = root;
+    Node *last = h;
+    while (!q.empty())
+    {
+        Node *p = q.front();
+        for (size_t i = 0; i < p->n; ++i)
+        {
+            getline(FILE, line);
+            if (line == " ")
+            {
+                flag = true;
+                getline(FILE, line);
+            }
+            Node *newnode = new Node(flag);
+            istringstream isk(line);
+            string key;
+            while (isk >> key)
+            {
+                newnode->keys.push_back(key);
+                newnode->n++;
+            }
+            newnode->parent = p;
+            p->child.push_back(newnode);
+
+            if (flag)
+            {
+                last->next = newnode;
+                last = newnode;
+                string value;
+                getline(FILE, line);
+                istringstream isv(line);
+                while (isv >> value)
+                    newnode->values.push_back(value);
+            }
+            else
+                q.push(newnode);
+        }
+        q.pop();
+    }
+    head = h->next;
+    delete (h);
+    FILE.close();
+    cout << "deserialized success!" << endl;
 }

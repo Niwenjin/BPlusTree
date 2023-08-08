@@ -15,13 +15,18 @@ void change(BPlusTree &);
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
         cout << "Please input m of B+tree." << endl;
         return -1;
     }
     int m = stoi(argv[1]);
     BPlusTree bpt(m);
+    if (argc == 3)
+    {
+        string filename = argv[2];
+        bpt.deserialize(filename);
+    }
     char opt;
     cout << "Input a choice: " << endl;
     while (cin >> opt)
@@ -49,8 +54,11 @@ int main(int argc, char **argv)
         case 'c':
             change(bpt);
             break;
-        case 'p':
+        case 't':
             bpt.show();
+            break;
+        case 'p':
+            bpt.printall();
             break;
         case 'q':
             return 0;
@@ -68,22 +76,23 @@ int main(int argc, char **argv)
 void help()
 {
     cout << "h--help" << endl;
-    cout << "r--read from file" << endl;
-    cout << "s--save to file" << endl;
+    cout << "r--read key-value from file" << endl;
+    cout << "s--serialize to file" << endl;
     cout << "i--insert" << endl;
     cout << "d--remove" << endl;
     cout << "f--search" << endl;
     cout << "c--change" << endl;
-    cout << "p--print all" << endl;
+    cout << "t--print tree" << endl;
+    cout << "p--print key-values" << endl;
     cout << "q--quit" << endl;
 }
 
 // 从文件读取键值对
 void readfile(BPlusTree &bpt)
 {
-    cout<<"Read from: "<<endl;
+    cout << "Read from: " << endl;
     string filename;
-    cin>>filename;
+    cin >> filename;
     bpt.read(filename);
 }
 
@@ -91,7 +100,7 @@ void readfile(BPlusTree &bpt)
 void save(BPlusTree &bpt)
 {
     string filename = readline("Save to: ");
-    bpt.save(filename);
+    bpt.serialize(filename);
 }
 
 // 从命令行插入键值对

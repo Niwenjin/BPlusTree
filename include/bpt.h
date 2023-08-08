@@ -25,8 +25,11 @@ public:
     string *search(string);
     bool change(string, string);
     void show();
+    void printall();
     void read(const string &);
     void save(const string &);
+    void serialize(const string &);
+    void deserialize(const string &);
 
 private:
     const size_t _m; // b+树的度
