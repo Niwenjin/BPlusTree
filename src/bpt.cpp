@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <queue>
+#include <time.h>
 using namespace std;
 
 // 在B+树中插入键值对
@@ -457,8 +458,12 @@ void BPlusTree::read(const string &filename)
         cerr << "Fail to open " << filename << endl;
         return;
     }
+
+    time_t start, end;
+    start = time(NULL);
+
     string line;
-    int cnt = 0;
+    // int cnt = 0;
     while (getline(FILE, line))
     {
         size_t pos = line.find('=');
@@ -467,12 +472,16 @@ void BPlusTree::read(const string &filename)
             string key = line.substr(0, pos - 1);
             string value = line.substr(pos + 2);
             insert(key, value);
-            cnt++;
+            // cnt++;
         }
-        if (cnt % 100000 == 0)
-            cout << cnt << " data inserted" << endl;
+        // if (cnt % 100000 == 0)
+        //     cout << cnt << " data inserted" << endl;
     }
     FILE.close();
+
+    end = time(NULL);
+    cout << "read success!" << endl;
+    cout << "time: " << difftime(end, start) << "s" << endl;
 }
 
 // 存储键值对到文件
@@ -532,6 +541,10 @@ void BPlusTree::serialize(const string &filename)
         cout << "No data!" << endl;
         return;
     }
+
+    time_t start, end;
+    start = time(NULL);
+
     vector<Node *> nodes;
     nodes.push_back(root);
     size_t i = 0;
@@ -570,7 +583,10 @@ void BPlusTree::serialize(const string &filename)
         }
     }
     FILE.close();
+
+    end = time(NULL);
     cout << "serialized success!" << endl;
+    cout << "time: " << difftime(end, start) << "s" << endl;
 }
 
 // 反序列化
@@ -586,6 +602,10 @@ void BPlusTree::deserialize(const string &filename)
     bool flag = false; // 判断叶子节点
     string line;
     queue<Node *> q;
+
+    time_t start, end;
+    start = time(NULL);
+
     getline(FILE, line);
     if (line != " ")
     {
@@ -660,5 +680,8 @@ void BPlusTree::deserialize(const string &filename)
     head = h->next;
     delete (h);
     FILE.close();
+
+    end = time(NULL);
     cout << "deserialized success!" << endl;
+    cout << "time: " << difftime(end, start) << "s" << endl;
 }
