@@ -213,6 +213,7 @@ void BPlusTree::borrow(Node *p, Node *bro, bool leaf, bool flag)
         {
             p->keys.insert(p->keys.begin(), bro->keys[bro->n - 1]);
             p->child.insert(p->child.begin(), bro->child[bro->n - 1]);
+            bro->child[bro->n - 1]->parent = p;
             update(p->parent, bro->keys[bro->n - 1], bro->keys[bro->n - 2]);
             bro->keys.pop_back();
             bro->child.pop_back();
@@ -221,6 +222,7 @@ void BPlusTree::borrow(Node *p, Node *bro, bool leaf, bool flag)
         {
             p->keys.push_back(bro->keys[0]);
             p->child.push_back(bro->child[0]);
+            bro->child[0]->parent = p;
             update(p->parent, p->keys[p->n - 1], p->keys[p->n]);
             bro->keys.erase(bro->keys.begin());
             bro->child.erase(bro->child.begin());
@@ -254,6 +256,7 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
             {
                 bro->keys.push_back(p->keys[i]);
                 bro->child.push_back(p->child[i]);
+                p->child[i]->parent=bro;
                 bro->n++;
             }
         }
@@ -282,6 +285,7 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
             {
                 p->keys.push_back(bro->keys[i]);
                 p->child.push_back(bro->child[i]);
+                bro->child[i]->parent=p;
                 p->n++;
             }
         }
