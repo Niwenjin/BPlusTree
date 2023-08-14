@@ -256,7 +256,7 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
             {
                 bro->keys.push_back(p->keys[i]);
                 bro->child.push_back(p->child[i]);
-                p->child[i]->parent=bro;
+                p->child[i]->parent = bro;
                 bro->n++;
             }
         }
@@ -285,7 +285,7 @@ void BPlusTree::merge(Node *p, Node *bro, bool leaf, bool flag)
             {
                 p->keys.push_back(bro->keys[i]);
                 p->child.push_back(bro->child[i]);
-                bro->child[i]->parent=p;
+                bro->child[i]->parent = p;
                 p->n++;
             }
         }
@@ -549,42 +549,29 @@ void BPlusTree::serialize(const string &filename)
     time_t start, end;
     start = time(NULL);
 
-    vector<Node *> nodes;
-    nodes.push_back(root);
-    size_t i = 0;
-    Node *p = root;
-    Node *parent = root;
-    while (!p->isleaf)
-    {
-        if (!p->isleaf)
-        {
-            for (size_t j = 0; j < p->n; ++j)
-                nodes.push_back(p->child[j]);
-        }
-        p = nodes[++i];
-    }
-    nodes.insert(nodes.begin() + i, nullptr);
-
     string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
     ofstream FILE(filepath + filename);
-    bool flag = false; // 区分分支节点和叶子节点
-    for (Node *p : nodes)
+    Node *p;
+    queue<Node *> q;
+    q.push(root);
+    while (!q.empty())
     {
-        if (p == nullptr)
-        {
-            flag = true;
+        p = q.front();
+        if (p == head)
             FILE << " " << endl;
-            continue;
-        }
-        for (string s : p->keys)
-            FILE << s << " ";
+        for (string key : p->keys)
+            FILE << key << " ";
         FILE << endl;
-        if (flag)
+        if (!p->isleaf)
+            for (Node *child : p->child)
+                q.push(child);
+        else
         {
-            for (string s : p->values)
-                FILE << s << " ";
+            for (string value : p->values)
+                FILE << value << " ";
             FILE << endl;
         }
+        q.pop();
     }
     FILE.close();
 
