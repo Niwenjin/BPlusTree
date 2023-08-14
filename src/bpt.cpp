@@ -4,7 +4,6 @@
 #include <sstream>
 #include <vector>
 #include <queue>
-#include <time.h>
 using namespace std;
 
 // 在B+树中插入键值对
@@ -463,9 +462,6 @@ void BPlusTree::read(const string &filename)
         return;
     }
 
-    time_t start, end;
-    start = time(NULL);
-
     string line;
     // int cnt = 0;
     while (getline(FILE, line))
@@ -482,10 +478,7 @@ void BPlusTree::read(const string &filename)
         //     cout << cnt << " data inserted" << endl;
     }
     FILE.close();
-
-    end = time(NULL);
     cout << "read success!" << endl;
-    cout << "time: " << difftime(end, start) << "s" << endl;
 }
 
 // 存储键值对到文件
@@ -546,9 +539,6 @@ void BPlusTree::serialize(const string &filename)
         return;
     }
 
-    time_t start, end;
-    start = time(NULL);
-
     string filepath = "/home/Niwenjin/Projects/BPlusTree/build/";
     ofstream FILE(filepath + filename);
     Node *p;
@@ -574,10 +564,7 @@ void BPlusTree::serialize(const string &filename)
         q.pop();
     }
     FILE.close();
-
-    end = time(NULL);
     cout << "serialized success!" << endl;
-    cout << "time: " << difftime(end, start) << "s" << endl;
 }
 
 // 反序列化
@@ -593,10 +580,6 @@ void BPlusTree::deserialize(const string &filename)
     bool flag = false; // 判断叶子节点
     string line;
     queue<Node *> q;
-
-    time_t start, end;
-    start = time(NULL);
-
     getline(FILE, line);
     if (line != " ")
     {
@@ -671,8 +654,5 @@ void BPlusTree::deserialize(const string &filename)
     head = h->next;
     delete (h);
     FILE.close();
-
-    end = time(NULL);
     cout << "deserialized success!" << endl;
-    cout << "time: " << difftime(end, start) << "s" << endl;
 }
