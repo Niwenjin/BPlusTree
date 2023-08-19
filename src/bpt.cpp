@@ -656,3 +656,16 @@ void BPlusTree::deserialize(const string &filename)
     FILE.close();
     cout << "deserialized success!" << endl;
 }
+
+// 释放b+树内存
+void BPlusTree::deleteTree(Node *p)
+{
+    if (!p->isleaf)
+    {
+        for (Node *child : p->child)
+            deleteTree(child);
+        delete (p);
+    }
+    else
+        delete (p);
+}

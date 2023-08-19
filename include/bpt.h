@@ -6,7 +6,14 @@ using namespace std;
 class Node
 {
 public:
-    Node(bool isleaf) : isleaf(isleaf), n(0), parent(nullptr), next(nullptr){};
+    Node(bool isleaf) : isleaf(isleaf),
+                        n(0), parent(nullptr), next(nullptr){};
+    ~Node()
+    {
+        keys.clear();
+        values.clear();
+        child.clear();
+    }
     bool isleaf;
     size_t n;
     vector<string> keys;
@@ -19,7 +26,11 @@ public:
 class BPlusTree
 {
 public:
-    BPlusTree(int m) : root(nullptr), head(nullptr), _m(m){};
+    BPlusTree(int m) : root(nullptr),
+                       head(nullptr), _m(m){};
+    ~BPlusTree() {
+        deleteTree(root);
+    }
     void insert(string, string);
     bool remove(string);
     string *search(string);
@@ -43,4 +54,5 @@ private:
     Node *search(Node *, string);
     size_t findkey(Node *, string);
     void print(Node *);
+    void deleteTree(Node *);
 };
