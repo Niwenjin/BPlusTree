@@ -28,8 +28,10 @@ class BPlusTree
 public:
     BPlusTree(int m) : root(nullptr),
                        head(nullptr), _m(m){};
-    ~BPlusTree() {
-        deleteTree(root);
+    ~BPlusTree()
+    {
+        if (root)
+            deleteTree(root);
     }
     void insert(string, string);
     bool remove(string);
