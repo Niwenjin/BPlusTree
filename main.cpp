@@ -14,6 +14,7 @@ void remove(BPlusTree &);
 void search(BPlusTree &);
 void change(BPlusTree &);
 void searchall(BPlusTree &);
+void deleteall(BPlusTree &);
 
 int main(int argc, char **argv)
 {
@@ -68,6 +69,9 @@ int main(int argc, char **argv)
             break;
         case 'x':
             searchall(bpt);
+            break;
+        case 'y':
+            deleteall(bpt);
             break;
         case 'q':
             return 0;
@@ -187,4 +191,16 @@ void searchall(BPlusTree &bpt)
     end = clock();
     cout << "time: " << end - start << "μs" << endl;
     // cout << "avg time: " << (end - start) / MAX << "μs" << endl;
+}
+
+//测试删除全部节点的时间
+void deleteall(BPlusTree &bpt)
+{
+    const int MAX = 10000000;
+    clock_t start, end;
+    start = clock();
+    for (int i = 0; i < MAX; i++)
+        bpt.remove(to_string(i));
+    end = clock();
+    cout << "time: " << end - start << "μs" << endl;
 }
